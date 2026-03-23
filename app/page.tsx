@@ -1,65 +1,153 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { useState, useEffect, useMemo } from "react";
+import { jobs as mockJobs, Job } from "./lib/jobs";
 
 export default function Home() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [department, setDepartment] = useState("All");
+  const [location, setLocation] = useState("All");
+  const [type, setType] = useState("All");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 6;
+
+  useEffect(() => {
+    setTimeout(() => {
+      setJobs(mockJobs);
+    }, 300);
+  }, []);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const depMatch = department === "All" || job.department === department;
+      const typeMatch = type === "All" || job.type === type;
+      const locMatch = location === "All" || job.location === location;
+
+      return depMatch && typeMatch && locMatch;
+    });
+  }, [jobs, department, location, type]);
+
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+
+  const departments = ["All", ...new Set(jobs.map((j) => j.department))];
+  const locations = ["All", ...new Set(jobs.map((j) => j.location))];
+  const types = ["All", ...new Set(jobs.map((j) => j.type))];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#020617] to-black text-white p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">Join Our Team</h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Discover exciting opportunities and grow your career with us.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-10">
+          <div className="w-full flex flex-col gap-2">
+            <label className="text-sm text-gray-400 font-medium">
+              Department
+            </label>
+            <select
+              value={department}
+              onChange={(e) => {
+                setDepartment(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-full">
+              {departments.map((d) => (
+                <option key={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full flex flex-col gap-2">
+            <label className="text-sm text-gray-400 font-medium">
+              Location
+            </label>
+            <select
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-full">
+              {locations.map((l) => (
+                <option key={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full flex flex-col gap-2">
+            <label className="text-sm text-gray-400 font-medium">Type</label>
+            <select
+              value={type}
+              onChange={(e) => {
+                setType(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-full">
+              {types.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
         </div>
-      </main>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {currentJobs.map((job) => (
+            <div
+              key={job.id}
+              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 hover:scale-[1.03] transition-transform shadow-xl">
+              <h2 className="text-xl font-semibold mb-2">{job.title}</h2>
+
+              <p className="text-gray-300">{job.department}</p>
+
+              <div className="mt-3 flex justify-between text-sm text-gray-400">
+                <span>{job.location}</span>
+                <span>{job.type}</span>
+              </div>
+
+              <Link href={`/jobs/${job.id}`}>
+                <button className="mt-5 w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 transition rounded-lg py-2 font-semibold">
+                  Apply
+                </button>
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        {filteredJobs.length === 0 && (
+          <p className="text-center mt-10 text-gray-400">No jobs found.</p>
+        )}
+
+        {filteredJobs.length > 0 && (
+          <div className="flex justify-center mt-10 gap-2 flex-wrap">
+
+            {[...Array(totalPages)].map((_, i) => {
+              const page = i + 1;
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-4 py-2 rounded-lg border ${
+                    currentPage === page
+                      ? "bg-indigo-500 text-white"
+                      : "bg-white/10 border-white/20"
+                  }`}>
+                  {page}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
