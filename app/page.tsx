@@ -7,9 +7,9 @@ import axios from "axios";
 type Job = {
   id: string;
   title: string;
-  job_category: string; // job_category
+  job_category: string;
   location: string;
-  employment_type: string; // employment_type
+  employment_type: string;
   description: string;
 };
 
@@ -34,9 +34,9 @@ export default function Home() {
         const formattedJobs: Job[] = res.data.map((j: Job) => ({
           id: j.id,
           title: j.title || "No Title",
-          job_category: j.job_category || "General", // job_category → department
+          job_category: j.job_category || "General",
           location: j.location || "Unknown",
-          employment_type: j.employment_type || "Full-time", // employment_type → type
+          employment_type: j.employment_type || "Full-time", 
           description:
             j.description ||
             `We are looking for a passionate ${j.title} to join our team.`,
@@ -91,7 +91,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-400 font-medium">
@@ -141,7 +140,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Job Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {currentJobs.map((job) => (
             <div
@@ -166,7 +164,6 @@ export default function Home() {
           <p className="text-center mt-10 text-gray-400">No jobs found.</p>
         )}
 
-        {/* Pagination */}
         {filteredJobs.length > 0 && (
           <div className="flex justify-center mt-10 gap-2 flex-wrap">
             {[...Array(totalPages)].map((_, i) => {
