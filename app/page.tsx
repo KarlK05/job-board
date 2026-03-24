@@ -2,7 +2,20 @@
 
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
-import { jobs as mockJobs, Job } from "./lib/jobs";
+import axios from "axios";
+
+type Job = {
+  id: string;
+  title: string;
+  job_category: string; // job_category
+  location: string;
+  employment_type: string; // employment_type
+  description: string;
+};
+
+const api = axios.create({
+  baseURL: "https://jsonfakery.com",
+});
 
 export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -14,30 +27,59 @@ export default function Home() {
   const jobsPerPage = 6;
 
   useEffect(() => {
-    setTimeout(() => {
-      setJobs(mockJobs);
-    }, 300);
+    const fetchJobs = async () => {
+      try {
+        const res = await api.get("/jobs");
+
+        const formattedJobs: Job[] = res.data.map((j: Job) => ({
+          id: j.id,
+          title: j.title || "No Title",
+          job_category: j.job_category || "General", // job_category → department
+          location: j.location || "Unknown",
+          employment_type: j.employment_type || "Full-time", // employment_type → type
+          description:
+            j.description ||
+            `We are looking for a passionate ${j.title} to join our team.`,
+        }));
+
+        setJobs(formattedJobs);
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+      }
+    };
+
+    fetchJobs();
   }, []);
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const depMatch = department === "All" || job.department === department;
-      const typeMatch = type === "All" || job.type === type;
-      const locMatch = location === "All" || job.location === location;
-
-      return depMatch && typeMatch && locMatch;
-    });
-  }, [jobs, department, location, type]);
+  const filteredJobs = useMemo(
+    () =>
+      jobs.filter((job) => {
+        const depMatch =
+          department === "All" || job.job_category === department;
+        const typeMatch = type === "All" || job.employment_type === type;
+        const locMatch = location === "All" || job.location === location;
+        return depMatch && typeMatch && locMatch;
+      }),
+    [jobs, department, location, type],
+  );
 
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
   const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
-
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
 
-  const departments = ["All", ...new Set(jobs.map((j) => j.department))];
-  const locations = ["All", ...new Set(jobs.map((j) => j.location))];
-  const types = ["All", ...new Set(jobs.map((j) => j.type))];
+  const departments = [
+    "All",
+    ...Array.from(new Set(jobs.map((j) => j.job_category))),
+  ];
+  const locations = [
+    "All",
+    ...Array.from(new Set(jobs.map((j) => j.location))),
+  ];
+  const types = [
+    "All",
+    ...Array.from(new Set(jobs.map((j) => j.employment_type))),
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#020617] to-black text-white p-6">
@@ -49,8 +91,9 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-10">
-          <div className="w-full flex flex-col gap-2">
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-400 font-medium">
               Department
             </label>
@@ -60,14 +103,13 @@ export default function Home() {
                 setDepartment(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-full">
+              className="bg-white/10 border border-white/20 rounded-lg p-3">
               {departments.map((d) => (
                 <option key={d}>{d}</option>
               ))}
             </select>
           </div>
-
-          <div className="w-full flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-400 font-medium">
               Location
             </label>
@@ -77,14 +119,13 @@ export default function Home() {
                 setLocation(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-full">
+              className="bg-white/10 border border-white/20 rounded-lg p-3">
               {locations.map((l) => (
                 <option key={l}>{l}</option>
               ))}
             </select>
           </div>
-
-          <div className="w-full flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-400 font-medium">Type</label>
             <select
               value={type}
@@ -92,7 +133,7 @@ export default function Home() {
                 setType(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-full">
+              className="bg-white/10 border border-white/20 rounded-lg p-3">
               {types.map((t) => (
                 <option key={t}>{t}</option>
               ))}
@@ -100,22 +141,20 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Job Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {currentJobs.map((job) => (
             <div
               key={job.id}
-              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 hover:scale-[1.03] transition-transform shadow-xl">
+              className="bg-white/10 border border-white/20 rounded-2xl p-6 hover:scale-[1.03] transition shadow-xl">
               <h2 className="text-xl font-semibold mb-2">{job.title}</h2>
-
-              <p className="text-gray-300">{job.department}</p>
-
+              <p className="text-gray-300">{job.job_category}</p>
               <div className="mt-3 flex justify-between text-sm text-gray-400">
                 <span>{job.location}</span>
-                <span>{job.type}</span>
+                <span>{job.employment_type}</span>
               </div>
-
-              <Link href={`/jobs/${job.id}`}>
-                <button className="mt-5 w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 transition rounded-lg py-2 font-semibold">
+              <Link href={`/jobs/${encodeURIComponent(job.id)}`}>
+                <button className="mt-5 w-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg py-2 font-semibold">
                   Apply
                 </button>
               </Link>
@@ -127,9 +166,9 @@ export default function Home() {
           <p className="text-center mt-10 text-gray-400">No jobs found.</p>
         )}
 
+        {/* Pagination */}
         {filteredJobs.length > 0 && (
           <div className="flex justify-center mt-10 gap-2 flex-wrap">
-
             {[...Array(totalPages)].map((_, i) => {
               const page = i + 1;
               return (
@@ -138,7 +177,7 @@ export default function Home() {
                   onClick={() => setCurrentPage(page)}
                   className={`px-4 py-2 rounded-lg border ${
                     currentPage === page
-                      ? "bg-indigo-500 text-white"
+                      ? "bg-indigo-500"
                       : "bg-white/10 border-white/20"
                   }`}>
                   {page}
